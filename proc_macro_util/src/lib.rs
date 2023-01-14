@@ -252,7 +252,11 @@ pub fn verify_container_attributes_compatibility<
                                 ));
                                 ts
                             },
-                            "incompatible attributes",
+                            format!(
+                                "incompatible attributes `{}` `{}`",
+                                attr_type.display(),
+                                incompatible_attr_type.display()
+                            ),
                         ))
                     } else {
                         Ok(())
@@ -445,7 +449,11 @@ pub fn verify_field_attributes_compatibility<FieldAttribute: FieldAttributeRequi
                                         ));
                                         ts
                                     },
-                                    "incompatible attributes",
+                                    format!(
+                                        "incompatible attributes `{}` `{}`",
+                                        attr_type.display(),
+                                        incompatible_attr_type.display()
+                                    ),
                                 ))
                             } else {
                                 Ok(())
