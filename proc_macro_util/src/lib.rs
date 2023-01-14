@@ -582,6 +582,22 @@ mod test {
     }
 
     #[test]
+    fn attribute_comparison_test_02() {
+        let required_attrs = AttributeOr::new(
+            AttributeAnd::new(Attr::A, Attr::B),
+            AttributeAnd::new(AttributeNot::new(Attr::A), AttributeNot::new(Attr::B)),
+        );
+
+        assert!(required_attrs.test(&[]));
+        assert!(required_attrs.test(&[Attr::A, Attr::B]));
+        assert!(required_attrs.test(&[Attr::C]));
+        assert!(!required_attrs.test(&[Attr::A]));
+        assert!(!required_attrs.test(&[Attr::B]));
+        assert!(!required_attrs.test(&[Attr::A, Attr::C]));
+        assert!(!required_attrs.test(&[Attr::B, Attr::C]));
+    }
+
+    #[test]
     fn attribute_comparison_display_01() {
         let required_attrs = AttributeAnd::new(
             Attr::A,
