@@ -172,6 +172,17 @@ pub trait ContainerAttributeTypeRequirement:
     /// opposite to it. This constraint is checked for at run time.
     fn incompatible_with(&self) -> &'static [Self];
 
+    /// Get list of field attributes `self` is incompatible with.
+    ///
+    /// It is important to have this incompatibility specified both
+    /// ways. It can be thought of as requiring a directed graph where
+    /// each edge of the graph must have an edge that is exactly
+    /// opposite to it. This contraint is checked at run time.
+    fn incompatible_with_field_attrs(&self) -> &'static [Self::FieldAttributeType] {
+        &[]
+    }
+}
+
 /// Empty container attribute type.
 #[derive(Debug, PartialEq, Eq, Hash)]
 pub struct EmptyContainerAttributeType<FieldAttributeType> {
@@ -449,6 +460,16 @@ pub trait FieldAttributeTypeRequirement:
     /// each edge of the graph must have an edge that is exactly
     /// opposite to it. This constraint is checked for at run time.
     fn incompatible_with_same_field(&self) -> &'static [Self];
+
+    /// Get list of container attributes `self` is incompatible with.
+    ///
+    /// It is important to have this incompatibility specified both
+    /// ways. It can be thought of as requiring a directed graph where
+    /// each edge of the graph must have an edge that is exactly
+    /// opposite to it. This contraint is checked at run time.
+    fn incompatible_with_container_attrs(&self) -> &'static [Self::ContainerAttributeType] {
+        &[]
+    }
 }
 
 /// Verify attribute compatibility.
