@@ -608,6 +608,123 @@ pub fn verify_field_attributes_compatibility<FieldAttribute: FieldAttributeRequi
     Ok(())
 }
 
+/// Verify compatibility between container and field attributes.
+///
+/// `container_attributes`: List of
+/// [`ContainerAttributeRequirements`]s of the struct.
+///
+/// `field_attributes`: List of [`FieldAttributeRequirements`]s for
+/// each field of the struct.
+pub fn verify_container_and_field_attributes_compatibility<
+    ContainerAttribute,
+    ContainerAttributeData,
+    ContainerAttributeType,
+    FieldAttribute,
+    FieldAttributeData,
+    FieldAttributeType,
+>(
+    container_attributes: &[ContainerAttribute],
+    fields_attributes: &[Vec<FieldAttribute>],
+) -> Result<(), syn::Error>
+where
+    ContainerAttribute:
+        ContainerAttributeRequirement<ContainerAttributeData = ContainerAttributeData>,
+    ContainerAttributeData:
+        ContainerAttributeDataRequirement<ContainerAttributeType = ContainerAttributeType>,
+    ContainerAttributeType:
+        ContainerAttributeTypeRequirement<FieldAttributeType = FieldAttributeType>,
+    FieldAttribute: FieldAttributeRequirement<FieldAttributeData = FieldAttributeData>,
+    FieldAttributeData: FieldAttributeDataRequirement<FieldAttributeType = FieldAttributeType>,
+    FieldAttributeType:
+        FieldAttributeTypeRequirement<ContainerAttributeType = ContainerAttributeType>,
+{
+    // verify the incompatibility graph is built correctly. Each edge
+    // must have a corresponding edge that is in the exact opposite
+    // direction
+    {
+        let all_container_attribute_types = <<ContainerAttribute::ContainerAttributeData
+                                              as ContainerAttributeDataRequirement>::ContainerAttributeType
+                                             as ContainerAttributeTypeRequirement>::all();
+        all_container_attribute_types
+            .iter()
+            .for_each(|container_attr_type| {
+                container_attr_type
+                    .incompatible_with_field_attrs()
+                    .iter()
+                    .for_each(|incompatible_field_attr_type| {
+                        assert!(incompatible_field_attr_type
+                            .incompatible_with_container_attrs()
+                            .iter()
+                            .find(|incompatible_container_attr_type| {
+                                *incompatible_container_attr_type == container_attr_type
+                            })
+                            .is_some());
+                    });
+            });
+
+        let all_field_attribute_types = <<FieldAttribute::FieldAttributeData
+                                          as FieldAttributeDataRequirement>::FieldAttributeType
+                                         as FieldAttributeTypeRequirement>::all();
+
+        all_field_attribute_types
+            .iter()
+            .for_each(|field_attr_type| {
+                field_attr_type
+                    .incompatible_with_container_attrs()
+                    .iter()
+                    .for_each(|incompatible_container_attr_type| {
+                        assert!(incompatible_container_attr_type
+                            .incompatible_with_field_attrs()
+                            .iter()
+                            .find(|incompatible_field_attr_type| {
+                                *incompatible_field_attr_type == field_attr_type
+                            })
+                            .is_some());
+                    });
+            });
+    }
+
+    // ensure no incompatible attributes are defined between the
+    // container attributes and the field attributes
+    //
+    // since the graph is already verified to have an edge in both
+    // directions, it is possible to test from the field attributes to
+    // the container attributes.
+    fields_attributes.iter().try_for_each(|field_attributes| {
+        field_attributes.iter().try_for_each(|field_attr| {
+            let field_attr_type = field_attr.get_attribute_data().to_type();
+
+            field_attr_type
+                .incompatible_with_container_attrs()
+                .iter()
+                .try_for_each(|incompatible_container_attr_type| {
+                    match container_attributes.iter().find(|container_attr| {
+                        *incompatible_container_attr_type
+                            == container_attr.get_attribute_data().to_type()
+                    }) {
+                        Some(incompatible_container_attr) => Err(syn::Error::new_spanned(
+                            {
+                                let mut ts = field_attr.get_token_stream().clone();
+                                ts.extend(std::iter::once(
+                                    incompatible_container_attr.get_token_stream().clone(),
+                                ));
+                                ts
+                            },
+                            format!(
+                                "incompatible attributes `{}` `{}`",
+                                field_attr_type.display(),
+                                incompatible_container_attr_type.display()
+                            ),
+                        )),
+                        None => Ok(()),
+                    }
+                })
+        })
+    })?;
+
+    Ok(())
+}
+
 /// Parse the given [`struct@syn::LitStr`] as a function.
 ///
 /// This is just an alias for [`parse_lit_str_into_expr_path()`] to
