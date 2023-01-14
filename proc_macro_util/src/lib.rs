@@ -1,5 +1,7 @@
 //! Proc macro utilities that can be used with all proc macro crates.
 
+use std::marker::PhantomData;
+
 use itertools::Itertools;
 use proc_macro2::TokenStream;
 
@@ -148,6 +150,9 @@ pub trait ContainerAttributeTypeRequirement:
     /// Required attributes for the container.
     const REQUIRED_ATTRIBUTES: Option<Self::RequiredAttributes>;
 
+    /// Corresponding [`FieldAttributeTypeRequirement`].
+    type FieldAttributeType: FieldAttributeTypeRequirement;
+
     /// Get all the possible [`Self`]s.
     fn all() -> &'static [Self];
 
@@ -164,8 +169,121 @@ pub trait ContainerAttributeTypeRequirement:
     /// It is important to have the incompatibility specified both
     /// ways. It can be thought of as requiring a directed graph where
     /// each edge of the graph must have an edge that is exactly
-    /// opposite to it. This constraint is checked for at compile.
+    /// opposite to it. This constraint is checked for at run time.
     fn incompatible_with(&self) -> &'static [Self];
+
+/// Empty container attribute type.
+#[derive(Debug, PartialEq, Eq, Hash)]
+pub struct EmptyContainerAttributeType<FieldAttributeType> {
+    _field_attr_type: PhantomData<FieldAttributeType>,
+}
+
+impl<FieldAttributeType: FieldAttributeTypeRequirement>
+    EmptyContainerAttributeType<FieldAttributeType>
+{
+    /// Create a new [`EmptyContainerAttributeType`].
+    pub fn new() -> Self {
+        Self {
+            _field_attr_type: PhantomData,
+        }
+    }
+}
+
+impl<FieldAttributeType: FieldAttributeTypeRequirement> Default
+    for EmptyContainerAttributeType<FieldAttributeType>
+{
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl<FieldAttributeType: FieldAttributeTypeRequirement> ContainerAttributeTypeRequirement
+    for EmptyContainerAttributeType<FieldAttributeType>
+{
+    type RequiredAttributes = Self;
+
+    const REQUIRED_ATTRIBUTES: Option<Self::RequiredAttributes> = None;
+
+    type FieldAttributeType = FieldAttributeType;
+
+    fn all() -> &'static [Self] {
+        todo!()
+    }
+
+    fn is_unique_per_container(&self) -> bool {
+        todo!()
+    }
+
+    fn incompatible_with(&self) -> &'static [Self] {
+        todo!()
+    }
+}
+
+impl<FieldAttribute: FieldAttributeTypeRequirement> AttributeIdentifier
+    for EmptyContainerAttributeType<FieldAttribute>
+{
+    fn identifier(&self) -> &'static [&'static str] {
+        &[]
+    }
+}
+
+/// Empty field attribute type.
+#[derive(Debug, PartialEq, Eq, Hash)]
+pub struct EmptyFieldAttributeType<ContainerAttributeType> {
+    _container_attr_type: PhantomData<ContainerAttributeType>,
+}
+
+impl<ContainerAttributeType: ContainerAttributeTypeRequirement>
+    EmptyFieldAttributeType<ContainerAttributeType>
+{
+    /// Create a new [`EmptyFieldAttributeType`].
+    pub fn new() -> Self {
+        Self {
+            _container_attr_type: PhantomData,
+        }
+    }
+}
+
+impl<ContainerAttributeType: ContainerAttributeTypeRequirement> Default
+    for EmptyFieldAttributeType<ContainerAttributeType>
+{
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl<ContainerAttributeType: ContainerAttributeTypeRequirement> FieldAttributeTypeRequirement
+    for EmptyFieldAttributeType<ContainerAttributeType>
+{
+    type RequiredAttributesSingleFieldType = Self;
+
+    const REQUIRED_ATTRIBUTES_SINGLE_FIELD: Option<Self::RequiredAttributesSingleFieldType> = None;
+
+    type ContainerAttributeType = ContainerAttributeType;
+
+    fn all() -> &'static [Self] {
+        &[]
+    }
+
+    fn is_unique_per_field(&self) -> bool {
+        true
+    }
+
+    fn is_unique_per_struct(&self) -> bool {
+        false
+    }
+
+    fn incompatible_with_same_field(&self) -> &'static [Self] {
+        &[]
+    }
+}
+
+impl<ContainerAttribute: ContainerAttributeTypeRequirement> AttributeIdentifier
+    for EmptyFieldAttributeType<ContainerAttribute>
+{
+    fn identifier(&self) -> &'static [&'static str] {
+        &[]
+    }
 }
 
 /// Verify attribute compatibility.
@@ -300,6 +418,9 @@ pub trait FieldAttributeTypeRequirement:
     /// field is expected to have these attributes defined.
     const REQUIRED_ATTRIBUTES_SINGLE_FIELD: Option<Self::RequiredAttributesSingleFieldType>;
 
+    /// Corresponding [`ContainerAttributeTypeRequirement`].
+    type ContainerAttributeType: ContainerAttributeTypeRequirement;
+
     /// Get all the possible [`Self`]s.
     fn all() -> &'static [Self];
 
@@ -326,7 +447,7 @@ pub trait FieldAttributeTypeRequirement:
     /// It is important to have the incompatibility specified both
     /// ways. It can be thought of as requiring a directed graph where
     /// each edge of the graph must have an edge that is exactly
-    /// opposite to it. This constraint is checked for at compile.
+    /// opposite to it. This constraint is checked for at run time.
     fn incompatible_with_same_field(&self) -> &'static [Self];
 }
 
