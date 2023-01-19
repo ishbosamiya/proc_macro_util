@@ -111,8 +111,8 @@ pub trait AttributeIdentifier {
     /// after parsing.
     fn identifier(&self) -> &'static [&'static str];
 
-    /// Does the given [`syn::Ident`] match any of the identifiers of
-    /// [`Self`].
+    /// Does the given [`struct@syn::Ident`] match any of the
+    /// identifiers of [`Self`].
     fn identifier_matches(&self, ident: &syn::Ident) -> bool {
         self.identifier().iter().any(|i| ident == i)
     }
@@ -474,7 +474,7 @@ pub trait FieldAttributeTypeRequirement:
 
 /// Verify attribute compatibility.
 ///
-/// `field_attributes`: List of [`FieldAttributeRequirements`]s for
+/// `field_attributes`: List of [`FieldAttributeRequirement`]s for
 /// each field of the struct.
 pub fn verify_field_attributes_compatibility<FieldAttribute: FieldAttributeRequirement>(
     fields_attributes: &[Vec<FieldAttribute>],
@@ -610,10 +610,10 @@ pub fn verify_field_attributes_compatibility<FieldAttribute: FieldAttributeRequi
 
 /// Verify compatibility between container and field attributes.
 ///
-/// `container_attributes`: List of
-/// [`ContainerAttributeRequirements`]s of the struct.
+/// `container_attributes`: List of [`ContainerAttributeRequirement`]s
+/// of the struct.
 ///
-/// `field_attributes`: List of [`FieldAttributeRequirements`]s for
+/// `field_attributes`: List of [`FieldAttributeRequirement`]s for
 /// each field of the struct.
 pub fn verify_container_and_field_attributes_compatibility<
     ContainerAttribute,
@@ -729,31 +729,26 @@ where
 ///
 /// This is just an alias for [`parse_lit_str_into_expr_path()`] to
 /// make the intent clearer.
-#[allow(dead_code)]
 pub fn parse_lit_str_as_function(s: &syn::LitStr) -> syn::parse::Result<syn::ExprPath> {
     parse_lit_str_into_expr_path(s)
 }
 
 /// Parse the given [`struct@syn::LitStr`] into [`struct@syn::Ident`].
-#[allow(dead_code)]
 pub fn parse_lit_str_into_ident(s: &syn::LitStr) -> syn::parse::Result<syn::Ident> {
     parse_lit_str(s)
 }
 
 /// Parse the given [`struct@syn::LitStr`] into [`enum@syn::Type`].
-#[allow(dead_code)]
 pub fn parse_lit_str_into_type(s: &syn::LitStr) -> syn::parse::Result<syn::Type> {
     parse_lit_str(s)
 }
 
 /// Parse the given [`struct@syn::LitStr`] into [`enum@syn::Expr`].
-#[allow(dead_code)]
 pub fn parse_lit_str_into_expr(s: &syn::LitStr) -> syn::parse::Result<syn::Expr> {
     parse_lit_str(s)
 }
 
 /// Parse the given [`struct@syn::LitStr`] into [`enum@syn::Visibility`].
-#[allow(dead_code)]
 pub fn parse_lit_str_into_visibility(s: &syn::LitStr) -> syn::parse::Result<syn::Visibility> {
     parse_lit_str(s)
 }
@@ -761,7 +756,7 @@ pub fn parse_lit_str_into_visibility(s: &syn::LitStr) -> syn::parse::Result<syn:
 /// Parse the given [`struct@syn::LitStr`] into [`struct@syn::ExprPath`].
 ///
 /// reference: serde-rs - serde_derive/src/internals/attr.rs
-fn parse_lit_str_into_expr_path(s: &syn::LitStr) -> syn::parse::Result<syn::ExprPath> {
+pub fn parse_lit_str_into_expr_path(s: &syn::LitStr) -> syn::parse::Result<syn::ExprPath> {
     parse_lit_str(s)
 }
 
