@@ -655,10 +655,9 @@ where
                         assert!(incompatible_field_attr_type
                             .incompatible_with_container_attrs()
                             .iter()
-                            .find(|incompatible_container_attr_type| {
-                                *incompatible_container_attr_type == container_attr_type
-                            })
-                            .is_some());
+                            .any(|incompatible_container_attr_type| {
+                                incompatible_container_attr_type == container_attr_type
+                            }));
                     });
             });
 
@@ -676,10 +675,9 @@ where
                         assert!(incompatible_container_attr_type
                             .incompatible_with_field_attrs()
                             .iter()
-                            .find(|incompatible_field_attr_type| {
-                                *incompatible_field_attr_type == field_attr_type
-                            })
-                            .is_some());
+                            .any(|incompatible_field_attr_type| {
+                                incompatible_field_attr_type == field_attr_type
+                            }));
                     });
             });
     }
