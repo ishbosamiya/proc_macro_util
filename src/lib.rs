@@ -181,6 +181,10 @@ pub trait ContainerAttributeTypeRequirement:
     fn incompatible_with_field_attrs(&self) -> &'static [Self::FieldAttributeType] {
         &[]
     }
+
+    /// Get the [`AttributeComparison`] that must pass when applied to
+    /// the list of container attributes.
+    fn depends_on(&self) -> Option<Box<dyn AttributeComparison<Self>>>;
 }
 
 /// Empty container attribute type.
@@ -226,6 +230,10 @@ impl<FieldAttributeType: FieldAttributeTypeRequirement> ContainerAttributeTypeRe
     }
 
     fn incompatible_with(&self) -> &'static [Self] {
+        todo!()
+    }
+
+    fn depends_on(&self) -> Option<Box<dyn AttributeComparison<Self>>> {
         todo!()
     }
 }
@@ -390,6 +398,31 @@ pub fn verify_container_attributes_compatibility<
                     } else {
                         Ok(())
                     }
+                })
+        })?;
+
+    // ensure all attributes pass the depends on test
+    container_attributes
+        .iter()
+        .zip_eq(container_attribute_types.iter())
+        .filter_map(|(attr, attr_type)| {
+            attr_type
+                .depends_on()
+                .map(|depends_on| (attr, attr_type, depends_on))
+        })
+        .try_for_each(|(attr, attr_type, depends_on)| {
+            depends_on
+                .test(&container_attribute_types)
+                .then_some(())
+                .ok_or_else(|| {
+                    syn::Error::new_spanned(
+                        attr.get_token_stream(),
+                        format!(
+                            "`{}` depends on `{}` to be valid",
+                            attr_type.display(),
+                            depends_on.display()
+                        ),
+                    )
                 })
         })?;
 
