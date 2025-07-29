@@ -1,5 +1,10 @@
 //! Proc macro utilities that can be used with all proc macro crates.
 
+// NOTE: don't agree with clippy, it is actually more readable to have
+// then not part of the string itself. Obviously if the number of
+// arguments is too high, then it becomes unreadable.
+#![allow(clippy::uninlined_format_args)]
+
 use std::marker::PhantomData;
 
 use itertools::Itertools;
